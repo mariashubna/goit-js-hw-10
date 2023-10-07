@@ -1,15 +1,20 @@
 import axios from "axios";
 
+
 const BASE_URL = "https://api.thecatapi.com/v1";
 
-// Функція для отримання списку порід
-export async function fetchBreeds() {
-  const response = await axios.get(`${BASE_URL}/breeds`);
-  return response.data;
+export function fetchBreeds() {
+  return axios.get(`${BASE_URL}/breeds`)
+    .then((response) => response.data)
+    .catch((error) => {
+      throw error;
+    });
 }
 
-// Функція для отримання інформації про кота за породою
-export async function fetchCatByBreed(breedId) {
-  const response = await axios.get(`${BASE_URL}/images/search?breed_ids=${breedId}`);
-  return response.data;
+export function fetchCatByBreed(breedId) {
+  return axios.get(`${BASE_URL}/images/search?breed_ids=${breedId}`)
+    .then((response) => response.data)
+    .catch((error) => {
+      throw error;
+    });
 }
