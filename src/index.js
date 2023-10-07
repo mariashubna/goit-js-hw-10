@@ -1,76 +1,80 @@
-import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
-import SlimSelect from 'slim-select'
+import axios from "axios";
+import { fetchBreeds, fetchCatByBreed } from "./cat-api.js";
 
-new SlimSelect({
-  select: '#selectElement'
-})
+const breedSelect = document.querySelector(".breed-select");
+const loader = document.querySelector(".loader");
+const error = document.querySelector(".error");
+const catInfo = document.querySelector(".cat-info");
 
-const refs = {
-    select: document.querySelector(".breed-select"),
-    catInfo: document.querySelector(".cat-info"),
-    loader: document.querySelector(".loader"),
-    error: document.querySelector(".error"),
-  };
+// Встановлюємо заголовок для HTTP-запитів
+axios.defaults.headers.common["x-api-key"] = "твій ключ";
 
+// Функція для відображення помилки
+function showError(message) {
+  error.textContent = message;
+  error.style.display = "block";
+}
 
+// Очищення вмісту div.cat-info
+function clearCatInfo() {
+  catInfo.innerHTML = "";
+}
 
-  fetchBreeds()
-  
-  .then((breeds) => {
-      
-    const breedOptions = breeds.map((breed) => {
-      const option = document.createElement('option');
+// Обробник події вибору породи
+breedSelect.addEventListener("change", async () => {
+  const selectedBreedId = breedSelect.value;
+
+  if (selectedBreedId) {
+    clearCatInfo();
+    loader.style.display = "block";
+    error.style.display = "none";
+
+    try {
+      const catData = await fetchCatByBreed(selectedBreedId);
+
+      // Відображення зображення та інформації про кота
+      const catImage = document.createElement("img");
+      catImage.src = catData[0].url;
+
+      const catName = document.createElement("h2");
+      catName.textContent = catData[0].breeds[0].name;
+
+      const catDescription = document.createElement("p");
+      catDescription.textContent = catData[0].breeds[0].description;
+
+      const catTemperament = document.createElement("p");
+      catTemperament.textContent = `Temperament: ${catData[0].breeds[0].temperament}`;
+
+      catInfo.appendChild(catImage);
+      catInfo.appendChild(catName);
+      catInfo.appendChild(catDescription);
+      catInfo.appendChild(catTemperament);
+    } catch (e) {
+      showError("Oops! Something went wrong!");
+    } finally {
+      loader.style.display = "none";
+    }
+  }
+});
+
+// Завантаження порід під час завантаження сторінки
+window.addEventListener("load", async () => {
+  loader.style.display = "block";
+  error.style.display = "none";
+
+  try {
+    const breeds = await fetchBreeds();
+
+    // Заповнюємо вибір порід опціями
+    breeds.forEach((breed) => {
+      const option = document.createElement("option");
       option.value = breed.id;
       option.textContent = breed.name;
-      return option;
+      breedSelect.appendChild(option);
     });
-  
-    breedOptions.forEach((option) => {
-     refs.select.appendChild(option);
-    });
-  })
-
-  .catch((error) => {
-    
-    hideLoader (refs.error);
-  });
- 
-  
-  
-  function hideLoader (e) {
-    refs.loader.style.display = "none";
-    e.style.display = "block";
+  } catch (e) {
+    showError("Oops! Something went wrong!");
+  } finally {
+    loader.style.display = "none";
   }
-  
-  function showError(error) {
-    refs.error.style.display = "block";
-    console.error(error);
-  }
-  
-  
-  refs.select.addEventListener('change', () => {
-    const selectedId = refs.select.value;
-  
-    if (selectedId) {
-      
-      refs.loader.style.display = "block";
-  
-      fetchCatByBreed(selectedId)
-        .then((catData) => {         
-          hideLoader(refs.catInfo);  
-          const cat = catData[0];
-          refs.catInfo.innerHTML = `
-            <h2>${cat.breeds[0].name}</h2>
-            <p>${cat.breeds[0].description}</p>
-            <p><strong>Temperament:</strong> ${cat.breeds[0].temperament}</p>
-            <img src="${cat.url}" alt="${cat.breeds[0].name}" />
-          `;
-        })
-        .catch((error) => {
-          hideLoader(refs.error);
-          console.error(error);
-        });
-    } else {
-      refs.catInfo.innerHTML = '';
-    }
-  });
+});
