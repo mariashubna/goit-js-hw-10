@@ -1,5 +1,6 @@
 import axios from "axios";
 import SlimSelect from 'slim-select';
+import Notiflix from 'notiflix';
 import { fetchBreeds, fetchCatByBreed } from "./cat-api.js";
 
 const breedSelect = document.querySelector(".breed-select");
@@ -17,14 +18,12 @@ axios.defaults.headers.common["x-api-key"] = "live_1FrID8A3d3SHqNZpm42jloqifB6oP
 function createCatMarkup(catData) {
   return catData
     .map(({ url, breeds }) => `
-      <div class="cat-card">
-        <img src="${url}" alt="${breeds[0].name}">
-        <div class="cat-info">
+        <img src="${url}" alt="${breeds[0].name}"  >
+        <div class="cat-card">
           <h2>${breeds[0].name}</h2>
           <p>${breeds[0].description}</p>
           <p>Temperament: ${breeds[0].temperament}</p>
         </div>
-      </div>
     `)
     .join("");
 }
@@ -32,6 +31,7 @@ function createCatMarkup(catData) {
 function showError(message) {
   error.textContent = message;
   error.style.display = "block";
+  Notiflix.Notify.failure(message);
 }
 
 function clearCatInfo() {
@@ -48,8 +48,7 @@ breedSelect.addEventListener("change", () => {
 
     fetchCatByBreed(selectedBreedId)
       .then((catData) => {
-        const catMarkup = createCatMarkup(catData);
-        catInfo.innerHTML = catMarkup;
+        catInfo.innerHTML = createCatMarkup(catData);
       })
       .catch(() => {
         showError("Oops! Something went wrong!");
